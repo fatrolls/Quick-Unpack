@@ -1,0 +1,2 @@
+build -cwZ
+del build*

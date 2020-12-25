@@ -1,0 +1,1130 @@
+<u><b>Abstract</b></u></br>
+
+<p align=right>A long time ago in a Galaxy far, far away...</p>
+</br>
+Мне предложили написать дизассемблер. Формат инструкций -- за исключением некоторых тонкостей -- я знал, и все это казалось делом двух недель и месяца отладки. Однако все оказалось не так просто. Формат Intel довольно сложен, тонкостей оказалось намного больше, а отладка сложна и муторна. В общем, сейчас, думаю, дизассемблер пришел к той точке, когда его можно показать.
+</br>
+</br>
+<u><b>Общая цель</b></u>
+</br>
+Общая цель была довольно размыта. От дизассемблера требовалось удобство пользования, возможность анализа кода, полнота выходного формата. При этом хотелось добиться минимализма, расширяемости и простоты. Не сказать, что это получилось (особенно в плане расширяемости), но что есть, то есть :).
+</br>
+</br>
+Дизассемблер работает в 16/32/64битных режимах, поддерживаются общий набор инструкций Intel и AMD, наборы инструкций FPU, SSE1, SSE2, SSE3, SSSE3, SSE4.1, SSE4.2, SMX, Intel-VT. Ожидается поддержка 3DNow! и AMD VMX. Дизассемблер определяет принадлежность инструкции к какой-либо группе инструкций, ID инструкции, тестируемые, изменяемые, устанавливаемые, сбрасываемые флаги регистра EFLAGS, а также флаги, значение которых не определено. Отлавливаются все избыточные префиксы, поддерживаются полудокументированные и недокументированные инструкции, UNICODE, многопоточность, работа в Linux и Windows. Остальные возможности дизассемблера описываются ниже вместе с описанием входных и выходных данных.
+</br>
+</br>
+<u><b>man disasm</b></u>
+</br>
+Главная выходной структурой является struct INSTRUCTION. Рассмотрим ее поля.
+</br>
+<u>struct INSTRUCTION</u>
+<pre>
+struct INSTRUCTION
+{
+    uint64_t groups;
+    uint16_t id;
+    uint16_t flags;
+    uint16_t prefixes;
+    uint8_t  opcode_offset;
+
+    struct OPERAND ops[3];
+    struct DISPLACEMENT disp;
+
+    uint8_t addrsize;
+    uint8_t opsize;
+    uint8_t modrm;
+    uint8_t sib;
+    uint8_t rex;
+
+    uint8_t tested_flags;
+    uint8_t modified_flags;
+    uint8_t set_flags;
+    uint8_t cleared_flags;
+    uint8_t undefined_flags;
+
+    unichar_t mnemonic[MAX_MNEMONIC_LEN];
+};
+</pre>
+
+После разбора дизассемблер предоставляет следующую информацию об инструкции:
+
+<table cellspacing='1' cellpadding='1' border='1'>
+<tr>
+<td>
+<b><nobr>uint64_t groups</nobr></b>
+</td>
+<td>
+Группы, в которые входит инструкция. Например, GRP_GEN | GRP_ARITH обозначает, что группа относится к общим и арифметическим инструкциям.
+</td>
+</tr>
+<tr>
+<td>
+<b><nobr>uint16_t id</nobr></b>
+</td>
+<td>
+ID инструкции. Инструкции, имеющие разные типы операндов, например 'call 0x401000' и 'call eax' имеют одинаковый ID. Это же касается и инструкций с мнемоникой, зависящей от размера операнда. Различать такие инструкции следует по полю opsize структуры INSTRUCTION. Список всех ID инструкций слишком большой, чтобы вставлять его сюда, его можно увидеть в файле "mediana.h"
+</td>
+</tr>
+<tr>
+<td>
+<b><nobr>uint16_t flags</nobr></b>
+</td>
+<td>
+Флаги инструкции. Возможные значения:
+<table>
+    <tr><td>INSTR_FLAG_MODRM</td><td>Инструкция имеет байт MODRM.</td></tr>
+    <tr><td>INSTR_FLAG_SIB</td><td>Инструкция имеет байт SIB.</td></tr>
+    <tr><td>INSTR_FLAG_SF_PREFIXES</td><td>Инструкция содержит избыточные префиксы.</td></tr>
+    <tr><td>INSTR_FLAG_IOPL</td><td>Инструкция является чувствительной к значению поля IOPL регистра EFLAGS.</td></tr>
+    <tr><td>INSTR_FLAG_RING0</td><td>Инструкция выполняется только в привилегированном режиме (ring0).</td></tr>
+    <tr><td>INSTR_FLAG_SERIAL</td><td>Сериализирующая инструкция.</td></tr>
+    <tr><td>INSTR_FLAG_UNDOC</td><td>Недокументированная инструкция. Если этот бит установлен, значит инструкция отсутствует в таблицах Intel и/или AMD.</td></tr>
+</table>
+</td>
+</tr>
+<tr>
+<td>
+<b><nobr>uint16_t prefixes</nobr></b>
+</td>
+<td>
+Префиксы инструкции. Сюда попадают лишь те префиксы, которые оказывают действительное влияние на инструкцию. Возможные значения:</br>
+INSTR_PREFIX_CS</br>
+INSTR_PREFIX_DS</br>
+INSTR_PREFIX_ES</br>
+INSTR_PREFIX_SS</br>
+INSTR_PREFIX_FS</br>
+INSTR_PREFIX_GS</br>
+//Segment prefixes mask:</br>
+INSTR_PREFIX_SEG_MASK</br>
+INSTR_PREFIX_REPZ</br>
+INSTR_PREFIX_REPNZ</br>
+//Repeat prefixes mask:</br>
+INSTR_PREFIX_REP_MASK</br>
+INSTR_PREFIX_OPSIZE</br>
+INSTR_PREFIX_ADDRSIZE</br>
+INSTR_PREFIX_REX</br>
+//Operand size prefixes mask:</br>
+INSTR_PREFIX_SIZE_MASK</br>
+//LOCK prefix:</br>
+INSTR_PREFIX_LOCK</br>
+Думаю, что в дополнительных описаниях эти значения не нуждаются :).
+</td>
+</tr>
+<tr>
+<td>
+<b><nobr>uint8_t  opcode_offset</nobr></b>
+</td>
+<td>
+Смещение байта кода операции относительно начала инструкции.
+</td>
+</tr>
+<tr>
+<td>
+<b><nobr>struct OPERAND ops[3]</nobr><b>
+</td>
+<td>
+Массив операндов инструкции. Структура OPERAND будет описана далее.
+</td>
+</tr>
+<tr>
+<td>
+<b><nobr>struct DISPLACEMENT disp</nobr><b>
+</td>
+<td>
+Смещение в команде. Структура DISPLACEMENT будет описана далее. Т.к. у инструкции не может быть более одного смещения, то для экономии его значение хранится в структуре INSTRUCTION, хотя и относится к одному из операндов.
+</td>
+</tr>
+<tr>
+<td>
+<b><nobr>uint8_t addrsize</nobr></b>
+</td>
+<td>
+Разрядность адреса инструкции. Константы:
+<pre>
+#define ADDR_SIZE_16 0x2
+#define ADDR_SIZE_32 0x4
+#define ADDR_SIZE_64 0x8
+</pre>
+</td>
+</tr>
+<tr>
+<td>
+<b><nobr>uint8_t opsize</nobr></b>
+</td>
+<td>
+Разрядность неявного операнда инструкции. Этот член используется только для инструкций, мнемоника которых зависит от размера неявного операнда, например pushfw/pushfd/pushfq. В остальных случаях оно равно нулю.
+</td>
+</tr>
+<tr>
+<td>
+<b><nobr>uint8_t modrm</nobr></b>
+</td>
+<td>
+Значение байта MODRM. Наличие/отсутствие байта MORDM определяется флагами инструкции (см. выше).
+</td>
+</tr>
+<tr>
+<td>
+<b><nobr>uint8_t sib</nobr></b>
+</td>
+<td>
+Значение байта SIB. Наличие/отсутствие байта SIB определяется флагами инструкции (см. выше).
+</td>
+</tr>
+<tr>
+<td>
+<b><nobr>uint8_t rex</nobr></b>
+</td>
+<td>
+Значение префикса REX. Наличие/отсутствие префикса REX определяется установленным/сброшенным битов в prefixes (см. выше). Константы для полей префикса:
+<pre>
+#define PREFIX_REX_W 0x8
+#define PREFIX_REX_R 0x4
+#define PREFIX_REX_X 0x2
+#define PREFIX_REX_B 0x1
+</pre>
+</td>
+</tr>
+<tr>
+<td>
+<b><nobr>uint8_t tested_flags</nobr></b>
+</td>
+<td>
+Флаги регистра EFLAGS, тестируемые инструкцией. Константы:
+<pre>
+#define EFLAG_C 0x01
+#define EFLAG_P 0x02
+#define EFLAG_A 0x04
+#define EFLAG_Z 0x08
+#define EFLAG_S 0x10
+#define EFLAG_I 0x20
+#define EFLAG_D 0x40
+#define EFLAG_O 0x80
+</pre>
+Константы для флагов FPU:
+<pre>
+#define FPU_FLAG0 0x01
+#define FPU_FLAG1 0x02
+#define FPU_FLAG2 0x04
+#define FPU_FLAG3 0x08
+</pre>
+</td>
+</tr>
+<tr>
+<td>
+<b><nobr>uint8_t modified_flags</nobr></b>
+</td>
+<td>
+Флаги регистра EFLAGS, модифицируемые инструкцией.
+</td>
+</tr>
+<tr>
+<td>
+<b><nobr>uint8_t set_flags</nobr></b>
+</td>
+<td>
+Флаги регистра EFLAGS, устанавливаемые в единицу.
+</td>
+</tr>
+<tr>
+<td>
+<b><nobr>uint8_t cleared_flags</nobr></b>
+</td>
+<td>
+Флаги регистра EFLAGS, сбрасываемые в ноль.
+</td>
+</tr>
+<tr>
+<td>
+<b><nobr>undefined_flags</nobr></b>
+</td>
+<td>
+Флаги регистра EFLAGS, чье значение не определено.
+</td>
+</tr>
+<tr>
+<td>
+<b><nobr>unichar_t mnemonic[MAX_MNEMONIC_LEN]</nobr></b>
+</td>
+<td>
+Мнемоника инструкции (кто бы мог подумать?..)
+</td>
+</tr>
+</table>
+<br/>
+Теперь разберем остальные структуры, содержащиеся в INSTRUCTION. Следующая важная структура, в некотором смысле описывающее лицо дизассемблера -- struct OPERAND.
+<br/>
+<br/>
+<u>struct OPERAND</u>
+<br/>
+В структуре OPERAND поддерживается четыре типа операнда: регистр, память, "прямой адрес" и непосредственное значение. Каждый тип операнда описывается отдельной структурой, структуры в свою очередь объединены в union для экономии места. Кроме того, структура содержит два члена "size" и "flags". Описание всех членов структуры следует ниже.
+<pre>
+struct OPERAND
+{
+	union
+	{
+		struct REG
+		{
+			uint8_t code;
+			uint8_t type;
+		} reg;
+
+		struct IMM
+		{
+			union
+			{
+				uint8_t  imm8;
+				uint16_t imm16;
+				uint32_t imm32;
+				uint64_t imm64;
+			};
+			uint8_t size;
+			uint8_t offset;
+		} imm;
+
+		struct FAR_ADDR
+		{
+			union
+			{
+				struct FAR_ADDR32
+				{
+					uint16_t offset;
+					uint16_t seg;
+				} far_addr32;
+
+				struct FAR_ADDR48
+				{
+					uint32_t offset;
+					uint16_t seg;
+				} far_addr48;
+			} ;
+
+			uint8_t offset;
+		} far_addr;
+
+		struct ADDR
+		{
+			uint8_t seg;
+			uint8_t mod;
+			uint8_t base;
+			uint8_t index;
+			uint8_t scale;
+		} addr;
+	} value;
+
+	uint16_t size;
+	uint8_t flags;
+};
+</pre>
+Члены "size" и "flags" описывают размер операнда и его флаги соответственно.
+<br/>
+<ul>
+<li>
+"size" отображает размер операнда после расширения в соответствии с режимом дизассемблирования. По каким-то неизвестным мне причинам я дал всем значениям символьные константы. М.б. кому-то пригодятся:
+<pre>
+#define	OPERAND_SIZE_8    0x0001
+#define	OPERAND_SIZE_16   0x0002
+#define	OPERAND_SIZE_32   0x0004
+#define	OPERAND_SIZE_48   0x0006
+#define	OPERAND_SIZE_64   0x0008
+#define	OPERAND_SIZE_80   0x000A
+#define	OPERAND_SIZE_128  0x0010
+#define OPERAND_SIZE_14   0x000E
+#define OPERAND_SIZE_28   0x001C
+#define OPERAND_SIZE_94   0x005E
+#define OPERAND_SIZE_108  0x006C
+#define OPERAND_SIZE_512  0x0200
+</pre>
+</li>
+<li>
+"flags" требует более детального описания. Оно показывает наличие/отсутствие операнда, его тип и несколько опций:
+<table cellspacing='1' cellpadding='1' border='1'>
+<tr>
+<td>
+<b>OPERAND_FLAG_PRESENT</b>
+</td>
+<td>
+Флаг присутствия/отсутствия операнда.
+</td>
+</tr>
+<tr>
+<td>
+<b>OPERAND_TYPE_REG</b>
+</td>
+<td>
+Тип операнда: "регистр".
+</td>
+</tr>
+<tr>
+<td>
+<b>OPERAND_TYPE_MEM</b>
+</td>
+<td>
+Тип операнда: "адрес".
+</td>
+</tr>
+<tr>
+<td>
+<b>OPERAND_TYPE_IMM</b>
+</td>
+<td>
+Тип операнда: "непосредственный операнд".
+</td>
+</tr>
+<tr>
+<td>
+<b>OPERAND_TYPE_DIR</b>
+</td>
+<td>
+Тип операнда: "прямой непосредственный операнд". За точность названия не ручаюсь, поэтому скажу, что это операнд инструкций, call (0x9A)/jmp (0xEA), содержащий в коде инструкции целевой адрес (длинный указатель).
+</td>
+</tr>
+<tr>
+<td>
+<b>OPERAND_TYPE_MASK</b>
+</td>
+<td>
+Маска для удобства вычленения типа операнда. Определение типа операнда может выглядеть, например, так:
+<br/>
+<pre>
+switch(instr ->ops[0].flags & OPERAND_TYPE_MASK)
+{
+case OPERAND_TYPE_REG:
+    ...
+    break;
+case OPERAND_TYPE_MEM:
+    ...
+    break;
+case OPERAND_TYPE_IMM:
+    ...
+    break;
+case OPERAND_TYPE_DIR:
+    ...
+    break;
+}
+</pre>
+</td>
+</tr>
+<tr>
+<td>
+<b>OPERAND_FLAG_REL</b>
+</td>
+<td>
+Наличие этого флага говорит о том, что значение операнда относительно адреса начала следующей инструкции. Это относится к таким инструкциям как call (0xE8), jmp (0xEB), Jcc и т.д. По умолчанию значение их операнда берется из кода и не отображает адрес, на который совершится переход. Флаг OPERAND_FLAG_REL показывает, что адрес этого операнда должен быть скорректирован. Это можно сделать и в автоматическом режиме, о чем будет сказано далее.
+</td>
+</tr>
+</table>
+</li>
+</ul>
+Более подробно о каждом типе операндов:
+<br/>
+<u>OPERAND_TYPE_REG</u>
+<br/>
+Регистр. Описывается структурой:
+<pre>
+struct REG
+{
+	uint8_t code;
+	uint8_t type;
+} reg;
+</pre>
+<ul>
+<li>
+Член "type" описывает тип регистра. Это может быть регистр общего назначения, сегментный регистр, регистр контроля (CRx), отладочный регистр, тестовый регистр, регистр FPU, MMX или SSE. Константы, описывающие типы регистра:
+<pre>
+#define REG_TYPE_GEN 0x0
+#define REG_TYPE_SEG 0x1
+#define REG_TYPE_CR  0x2
+#define REG_TYPE_DBG 0x3
+#define REG_TYPE_TR  0x4
+#define REG_TYPE_FPU 0x5
+#define REG_TYPE_MMX 0x7
+#define REG_TYPE_XMM 0x8
+</pre>
+</li>
+<li>
+Член "code" содержит код регистра. В зависимости от типа регистра значение этого члена может интерпретироваться по-разному. Кодирование регистров различных типов:
+<pre>
+//OPERAND.REG.code's values (GPR):
+#define REG_CODE_AX  0x0
+#define REG_CODE_CX  0x1
+#define REG_CODE_DX  0x2
+#define REG_CODE_BX  0x3
+#define REG_CODE_SP  0x4
+#define REG_CODE_BP  0x5
+#define REG_CODE_SI  0x6
+#define REG_CODE_DI  0x7
+
+#define REG_CODE_64  0x8
+
+#define REG_CODE_R8  0x8
+#define REG_CODE_R9  0x9
+#define REG_CODE_R10 0xA
+#define REG_CODE_R11 0xB
+#define REG_CODE_R12 0xC
+#define REG_CODE_R13 0xD
+#define REG_CODE_R14 0xE
+#define REG_CODE_R15 0xF
+#define REG_CODE_SPL 0x10
+#define REG_CODE_BPL 0x11
+#define REG_CODE_SIL 0x12
+#define REG_CODE_DIL 0x13
+#define REG_CODE_IP  0x14
+
+//OPERAND.REG.code's values (segment registers):
+#define SREG_CODE_CS 0x0
+#define SREG_CODE_DS 0x1
+#define SREG_CODE_ES 0x2
+#define SREG_CODE_SS 0x3
+#define SREG_CODE_FS 0x4
+#define SREG_CODE_GS 0x5
+
+//OPERAND.REG.code's values (FPU registers):
+#define FREG_CODE_ST0 0x0
+#define FREG_CODE_ST1 0x1
+#define FREG_CODE_ST2 0x2
+#define FREG_CODE_ST3 0x3
+#define FREG_CODE_ST4 0x4
+#define FREG_CODE_ST5 0x5
+#define FREG_CODE_ST6 0x6
+#define FREG_CODE_ST7 0x7
+
+//OPERAND.REG.code's values (control registers):
+#define CREG_CODE_CR0 0x0
+#define CREG_CODE_CR1 0x1
+#define CREG_CODE_CR2 0x2
+#define CREG_CODE_CR3 0x3
+#define CREG_CODE_CR4 0x4
+#define CREG_CODE_CR5 0x5
+#define CREG_CODE_CR6 0x6
+#define CREG_CODE_CR7 0x7
+
+//OPERAND.REG.code's values (debug registers):
+#define DREG_CODE_DR0 0x0
+#define DREG_CODE_DR1 0x1
+#define DREG_CODE_DR2 0x2
+#define DREG_CODE_DR3 0x3
+#define DREG_CODE_DR4 0x4
+#define DREG_CODE_DR5 0x5
+#define DREG_CODE_DR6 0x6
+#define DREG_CODE_DR7 0x7
+
+//OPERAND.REG.code's values (MMX registers):
+#define MREG_CODE_MM0 0x0
+#define MREG_CODE_MM1 0x1
+#define MREG_CODE_MM2 0x2
+#define MREG_CODE_MM3 0x3
+#define MREG_CODE_MM4 0x4
+#define MREG_CODE_MM5 0x5
+#define MREG_CODE_MM6 0x6
+#define MREG_CODE_MM7 0x7
+
+//OPERAND.REG.code's values (XMM registers):
+#define XREG_CODE_XMM0  0x0
+#define XREG_CODE_XMM1  0x1
+#define XREG_CODE_XMM2  0x2
+#define XREG_CODE_XMM3  0x3
+#define XREG_CODE_XMM4  0x4
+#define XREG_CODE_XMM5  0x5
+#define XREG_CODE_XMM6  0x6
+#define XREG_CODE_XMM7  0x7
+
+#define XREG_CODE_XMM8  0x8
+#define XREG_CODE_XMM9  0x9
+#define XREG_CODE_XMM10 0xA
+#define XREG_CODE_XMM11 0xB
+#define XREG_CODE_XMM12 0xC
+#define XREG_CODE_XMM13 0xD
+#define XREG_CODE_XMM14 0xE
+#define XREG_CODE_XMM15 0xF
+</pre>
+</li>
+</ul>
+<u>OPERAND_TYPE_MEM</u>
+<br/>
+Адрес. Описывается структурой:
+<pre>
+struct ADDR
+{
+	uint8_t seg;
+	uint8_t mod;
+	uint8_t base;
+	uint8_t index;
+	uint8_t scale;
+} addr;
+</pre>
+<ul>
+<li>
+Член "seg" содержит сегментный регистр адреса. Сегментный регистр кодируется значениями из предыдущего абзаца.
+</li>
+<li>
+Член "mod". Для упрощения анализа я изменил стандартное кодирование поля "mod". В отличие от кодировки Intel & AMD "mod" описывает части адреса более единообразно: одна и та же кодировка используется для всех режимов дизассемблирования (16/32/64 бита). "mod" -- это битовое поле, описывающее какие из частей адреса (база, индекс, смещение) участвуют в формировании адреса. Значения члена "mod":
+<pre>
+#define ADDR_MOD_BASE 0x1
+#define ADDR_MOD_IDX  0x2
+#define ADDR_MOD_DISP 0x4
+</pre>
+и описание к ним:
+<table cellspacing='1' cellpadding='1' border='1'>
+<tr>
+<td>
+<b>ADDR_MOD_BASE</b>
+</td>
+<td>
+Адрес содержит базовый регистр. В этом случае член "base" структуры ADDR кодирует базовый регистр адреса.
+</td>
+</tr>
+<tr>
+<td>
+<b>ADDR_MOD_IDX</b>
+</td>
+<td>
+Адрес содержит индексный регистр. В этом случае член "index" структуры ADDR кодирует индексный регистр адреса.
+</td>
+</tr>
+<tr>
+<td>
+<b>ADDR_MOD_DISP</b>
+</td>
+<td>
+Адрес содержит смещение (displacement). В этом случае структура DISPLACEMENT (описывается ниже) будет заполнена дизассемблером.
+</td>
+</tr>
+</table>
+</li>
+<li>
+Член "base". Кодирует базовый регистр адреса.
+</li>
+<li>
+Член "index". Кодирует индексный регистр адреса.
+</li>
+<li>
+</li>
+Член "scale". Кодирует множитель индексного регистра. Множитель не контролируется членом "mod" и содержит единицу, в случае если адрес не содержит множителя. Возможные значения множителя: 1, 2, 4, 8.
+</ul>
+<u>OPERAND_TYPE_IMM</u>
+<br/>
+Непосредственный операнд. Описывается структурой:
+<pre>
+struct IMM
+{
+	union
+	{
+		uint8_t  imm8;
+		uint16_t imm16;
+		uint32_t imm32;
+		uint64_t imm64;
+	};
+	uint8_t size;
+	uint8_t offset;
+} imm;
+</pre>
+<ul>
+<li>
+Анонимный union содержит значение непосредственного операнда. Т.к. ни размер, ни режим дизассемблирования изначально не известны, все возможные варианты объединены в union. Непосредственные операнды всегда расширяются до 64х бит.
+</li>
+<li>
+"size". Размер непосредственного операнда в инструкции. Многие непосредственные операнды (особенно в 64битном режиме) расширяются процессором до 16/32/64битных значений. Этот член содержит размер операнда до расширения, таким, какой он был в коде инструкции. Размер операнда после расширения указывается в члене size структуры OPERAND.
+</li>
+<li>
+"offset". Смещение непосредственного операнда относительно начала инструкции.
+</li>
+</ul>
+<u>OPERAND_TYPE_DIR</u>
+<br/>
+"Прямой" адрес. Эти "дальние" адреса размещаются в теле инструкции.
+<pre>
+struct FAR_ADDR
+{
+	union
+	{
+		struct FAR_ADDR32
+		{
+			uint16_t offset;
+			uint16_t seg;
+		} far_addr32;
+
+		struct FAR_ADDR48
+		{
+			uint32_t offset;
+			uint16_t seg;
+		} far_addr48;
+	};
+	uint8_t offset;
+} far_addr;
+</pre>
+<ul>
+<li>
+Анонимный union содержит две структуры для 16битных и 32битных адресов.
+<pre>
+struct FAR_ADDR32
+{
+	uint16_t offset;
+	uint16_t seg;
+} far_addr32;
+</pre>
+"offset" содержит смещение в сегменте, "seg" -- значение сегментного регистра после выполнения операции.
+</li>
+<li>
+"offset". Смещение прямого адреса относительно начала инструкции.
+</li>
+</ul>
+
+Теперь вкратце разберем уже упоминавшуюся структуру DISPLACEMENT.
+<br/>
+<br/>
+<u>struct DISPLACEMENT</u>
+<br/>
+<pre>
+struct DISPLACEMENT
+{
+	uint8_t size;
+	uint8_t offset;
+	union VALUE
+	{
+		int16_t d16;
+		int32_t d32;
+		int64_t d64;
+	} value;
+};
+</pre>
+<ul>
+<li>
+"size" содержит размер смещения до расширения. Смещение всегда расширяется со знаком до восьми байт. Размер смещения после расширения следует брать из члена addrsize структуры INSTRUCTION.
+</li>
+<li>
+"offset". Смещение смещения (простите за каламбур) относительно начала инструкции.
+</li>
+<li>
+union "VALUE" содержит значение смещения. Как и в случае непосредственного операнда union описывает все возможные размеры смещения.
+</li>
+</ul>
+<br/>
+Теперь, когда все основные структуры разобраны, можно перейти к функциям дизассемблера.
+<br/>
+<u>disassemble()</u>
+<pre>
+unsigned int disassemble(uint8_t                    *offset,  /* IN */
+                         struct INSTRUCTION         *instr,   /* OUT */
+                         struct DISASM_INOUT_PARAMS *params); /* IN/OUT */
+</pre>
+<ul>
+<li>
+uint8_t *offset -- адрес буфера, содержащий предназначенный для дизассемблирования код.
+</li>
+<li>
+struct INSTRUCTION *instr -- адрес выходной структуры. В нее будет помещен результат дизассемблирования.
+</li>
+<li>
+struct DISASM_INOUT_PARAMS *params -- адрес структуры входных/выходных параметров. Она требует более детального рассмотрения, т.к. затрагивает многие аспекты работы дизассемблера.
+<pre>
+struct DISASM_INOUT_PARAMS
+{
+    int      sf_prefixes_len;
+    uint8_t *sf_prefixes;
+    uint32_t errcode;
+    uint8_t  arch;
+    uint8_t  mode;
+    uint8_t  options;
+    uint64_t base;
+};
+</pre>
+<table cellspacing='1' cellpadding='1' border='1'>
+<tr>
+<td>
+<b>sf_prefixes_len</b>
+</td>
+<td>
+Выходной параметр. Содержит количество избыточных префиксов в массиве sf_prefixes (см. ниже).
+</td>
+</tr>
+
+<tr>
+<td>
+<b>uint8_t *sf_prefixes</b>
+</td>
+<td>
+Выходной параметр. Массив для хранения избыточных префиксов. В случае, если sf_prefixes не NULL, в него копируются избыточные префиксы. Их количество описывается sf_prefixes_len (см. выше). Размер массива должен быть не меньше чем 'MAX_INSTRUCTION_LEN - 1'.
+</td>
+</tr>
+
+<tr>
+<td>
+<b>uint32_t errcode</b>
+</td>
+<td>
+Код ошибки. Единственный способ узнать, дизассемблирована инструкция успешно или нет. Код ERR_OK означает, что дизассемблирование прошло успешно. Коды остальных ошибок:
+<table>
+<tr>
+<td>
+ERR_BADCODE
+</td>
+<td>
+Неизвестный код команды.
+</td>
+</tr>
+
+<tr>
+<td>
+ERR_TOO_LONG
+</td>
+<td>
+Длина инструкции превышает 15 байт.
+</td>
+</tr>
+
+<tr>
+<td>
+ERR_NON_LOCKABLE
+</td>
+<td>
+Префикс LOCK использован с инструкцией, не поддерживающей его.
+</td>
+</tr>
+
+<tr>
+<td>
+ERR_RM_REG
+</td>
+<td>
+Операнд, который должен кодировать только адрес, кодирует регистр.
+</td>
+</tr>
+
+<tr>
+<td>
+ERR_RM_MEM
+</td>
+<td>
+Операнд, который должен кодировать только регистр, кодирует адрес.
+</td>
+</tr>
+
+<tr>
+<td>
+ERR_16_32_ONLY
+</td>
+<td>
+Инструкция доступна только в 16/32битном режиме.
+</td>
+</tr>
+
+
+<tr>
+<td>
+ERR_64_ONLY
+</td>
+<td>
+Инструкция доступна только в 64битном режиме.
+</td>
+</tr>
+
+
+<tr>
+<td>
+ERR_REX_NOOPCD
+</td>
+<td>
+За префиксом REX не следует код команды.
+</td>
+</tr>
+
+<tr>
+<td>
+ERR_ANOT_ARCH
+</td>
+<td>
+Инструкция не входит в набор заданных архитектур (см. описание члена arch структуры DISASM_INOUT_PARAMS).
+</td>
+</tr>
+
+<tr>
+<td>
+ERR_INTERNAL
+</td>
+<td>
+Внутренняя ошибка дизассемблера.
+</td>
+</tr>
+</table>
+Дизассемблер всегда пытается разобрать инструкцию, даже если произошла ошибка дизассемблирования. Ошибки условно делятся на фатальные и легкие. К фатальным ошибкам относятся: ERR_TOO_LONG, ERR_REX_NOOPCD и ERR_INTERNAL. В этом случае дизассемблирование прекращается сразу, как только обнаружена одна из этих ошибок. Остальные ошибки относятся к легким. Это не значит, что процессор сможет выполнить некорректную инструкцию, но по крайней мере возможно получить о ней максимум информации:  длину, мнемонику, операнды и т.д.
+</td>
+</tr>
+
+<tr>
+<td>
+<b>uint8_t arch</b>
+</td>
+<td>
+Набор включаемых архитектур. Каждая архитектура (общие инструкции, инструкции специфичные для Intel, AMD) включается отдельным флагом. Если дизассемблер встретит инструкцию из набора, который не был запрошен, он вернет ошибку ERR_ANOT_ARCH. Константы архитектур:
+<pre>
+#define ARCH_COMMON 0x1
+#define ARCH_INTEL  0x2
+#define ARCH_AMD    0x4
+#define ARCH_ALL    (ARCH_COMMON | ARCH_INTEL | ARCH_AMD)
+</pre>
+</td>
+</tr>
+
+<tr>
+<td>
+<b>uint8_t mode</b>
+</td>
+<td>
+Режим дизассемблирования. Константы:
+<pre>
+#define DISASSEMBLE_MODE_16 0x1
+#define DISASSEMBLE_MODE_32 0x2
+#define DISASSEMBLE_MODE_64 0x4
+</pre>
+</td>
+</tr>
+
+<tr>
+<td>
+<b>uint8_t options</b>
+</td>
+<td>
+Опции дизассемблирования. На данный момент доступны две опции:
+<pre>
+#define DISASM_OPTION_APPLY_REL     0x1
+#define DISASM_OPTION_OPTIMIZE_DISP 0x2
+</pre>
+DISASM_OPTION_APPLY_REL включает режим, в котором дизассемблер пересчитывает значения операндов с флагом OPERAND_FLAG_REL (см. член flags структуры OPERAND). При пересчете происходит сложение базового адреса инструкции (см. ниже) со значением операнда и длиной разобранной инструкции.
+<br/>
+DISASM_OPTION_OPTIMIZE_DISP включает оптимизацию смещений. Если значение смещения равно нулю, например 'mov eax, [eax + 0x0]', то смещение будет убрано из операнда ('mov eax, [eax]'). При этом информация о смещении не удаляется из структуры DISPLACEMENT, а корректируется только член "mod" структуры ADDR. Оптимизация не удаляет смещения, если они являются единственной частью адреса, например 'mov eax, [0x0]'.
+</td>
+</tr>
+
+<tr>
+<td>
+<b>uint64_t base</b>
+</td>
+<td>
+Содержит виртуальный базовый адрес начала инструкции. Используется в случае, если включена опция DISASM_OPTION_APPLY_REL. Т.к. дизассемблер на запоминает адрес предыдущей разобранной инструкции, пользователь дизассемблера должен сам прибавлять к базовому адресу длину каждой разобранной инструкции.
+</td>
+</tr>
+</table>
+</li>
+</ul>
+<u>Unicode</u>
+<br/>
+Поддержка Unicode осуществляется с помощью типа unichar_t. Этот тип, в зависимости от того, определен ли макрос UNICODE, будет объявлен как char/wchar_t. 
+<br/>
+<br/>
+<u>Пример использования</u>
+<pre>
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include "mediana.h" //Главный заголовочный файл дизассемблера.
+
+#define OUT_BUFF_SIZE 0x200
+#define IN_BUFF_SIZE  14231285
+#define SEEK_TO       0x0
+
+int main(int argc, char **argv)
+{
+    uint8_t sf_prefixes[MAX_INSTRUCTION_LEN]; //Массив избыточных префиксов.
+    unichar_t buff[OUT_BUFF_SIZE];            //Выходной буфер печати инструкции.
+    struct INSTRUCTION instr;                 //Выходная инструкция.
+    struct DISASM_INOUT_PARAMS params;        //Параметры дизассемблера.
+
+    uint8_t *base, *ptr, *end;
+    int reallen;
+    unsigned int res;
+    FILE *fp;
+
+    params.arch = ARCH_ALL;                                                 //Включая все архитектуры.
+    params.sf_prefixes = sf_prefixes;                                       //Подключение массива избыточных префиксов.
+    params.mode = DISASSEMBLE_MODE_32;                                      //Режим дизассемблирования.
+    params.options = DISASM_OPTION_APPLY_REL | DISASM_OPTION_OPTIMIZE_DISP; //Все опции.
+    params.base = 0x00401000;                                               //Базовый адрес первой инструкции.
+
+    base = malloc(IN_BUFF_SIZE);
+    ptr = base;
+    end = ptr + IN_BUFF_SIZE;
+
+
+    fp = fopen("asm_com2.bin", "rb");
+    fseek(fp, SEEK_TO, SEEK_SET);
+    fread(base, IN_BUFF_SIZE, 1, fp);
+    fclose(fp);
+
+
+    while(ptr < end)
+    {
+        res = medi_disassemble(ptr, &instr, &params); //Disassemble!
+        if (params.errcode)
+        {
+            printf("%X: fail: %d, len: %d\n", ptr - base, params.errcode, res);
+            if (res == 0)
+                res++;
+        }
+        else
+        {
+            reallen = medi_dump(&instr, buff, OUT_BUFF_SIZE, DUMP_OPTION_IMM_UHEX | DUMP_OPTION_DISP_HEX); //Эта ф-ия будет описана ниже.
+            if (reallen < OUT_BUFF_SIZE)
+                buff[reallen] = 0;
+            else
+                buff[OUT_BUFF_SIZE - 1] = 0;
+
+            printf("%X: %s\n", ptr - base, buff);
+        }
+        ptr += res;
+        params.base += res; //Высчитываем базовый адрес следующей инструкции.
+    }
+
+    return 0;
+}
+
+</pre>
+<u>Вывод результатов</u>
+<br/>
+Часто после того, как инструкция разобрана, ее необходимо вывести на экран или куда-либо еще. Дизассемблер имеет несколько функций для вывода текстовой информации об инструкции в буфер:
+<pre>
+int dump(struct INSTRUCTION *instr,    /* IN */
+         unichar_t          *buff,     /* OUT */
+         int                 bufflen,  /* IN */
+         int                 options); /* IN */
+
+int dump_prefixes(struct INSTRUCTION *instr,    /* IN */
+                  int                 options,  /* IN */
+                  unichar_t          *buff,     /* OUT */
+                  int                 bufflen); /* IN */
+
+int dump_mnemonic(struct INSTRUCTION *instr,    /* IN */
+                  unichar_t          *buff,     /* OUT */
+                  int                 bufflen); /* IN */
+
+int dump_operand(struct INSTRUCTION *instr,    /* IN */
+                 int                 op_index, /* IN */
+                 int                 options,  /* IN */
+                 unichar_t          *buff,     /* OUT */
+                 int                 bufflen); /* IN */
+
+int dbg_dump(struct INSTRUCTION *instr,           /* IN */
+             uint8_t            *sf_prefixes,     /* IN */
+             int                 sf_prefixes_len, /* IN */
+             unichar_t          *buff,            /* OUT */
+             int                 len);            /* IN */
+</pre>
+Функция dump выводит в буфер префиксы, мнемонику и операнды инструкции. Действие остальных функций понятно из названий. Отдельно стоит сказать про функцию dbg_dump: она выводит отладочную (наиболее полную) информацию об инструкции. В нее входят все префиксы, флаги и свойства инструкции, группы в которых она участвует, подробная информация операндах: их тип, значение и т.д.
+<br/>
+Каждая функция принимает struct INSTRUCTION, а также выходной буфер (unichar_t *buff), его длину (int len) в символах и опции вывода непосредственных операндов и смещений. Дизассемблер заполняет буфер до тех пор, пока в нем есть место или пока не кончится текстовая информация об инструкции. Важное замечание: все функции возвращают требуемый для вывода инструкции размер буфера. Таким образом, если всегда можно узнать, какой объем буфера требуется для вывода информации об инструкции. Например, вы передали в функцию "dump" буфер длиной 10 символов. Если функция вернула значение 15, значит для вывода инструкции требуется буфер на пять символов больше.
+<br/>
+Доступны четыре варианта вывода непосредственных операндов и смещений: знаковый шестнадцатеричный, беззнаковый шестнадцатеричный, знаковый десятичный и беззнаковый десятичный. Константы опций вывода:
+<pre>
+#define DUMP_OPTION_IMM_HEX   0x01
+#define DUMP_OPTION_IMM_UHEX  0x02
+#define DUMP_OPTION_IMM_DEC   0x04
+#define DUMP_OPTION_IMM_UDEC  0x08
+#define DUMP_OPTION_IMM_MASK  0x0F
+
+#define DUMP_OPTION_DISP_HEX  0x10
+#define DUMP_OPTION_DISP_UHEX 0x20
+#define DUMP_OPTION_DISP_DEC  0x40
+#define DUMP_OPTION_DISP_UDEC 0x80
+#define DUMP_OPTION_DISP_MASK 0xF0
+</pre>
+<u>Контроль компиляции</u>
+<br/>
+Для удобства контроля компиляции дизассемблера в него включен файл disasm_ctrl.h. На данный момент из него можно:
+<ul>
+<li>
+Установить выравнивание для структур INSTRUCTION, OPERAND и DISPLACEMENT.
+</li>
+<li>
+Включить или выключить компиляцию функций вывода и отладочного вывода инструкции.
+</li>
+</ul>
+<u>Минусы дизассемблера</u>
+<br/>
+Несмотря на длительное время разработки, дизассемблер имеет несколько серьезных недостатков. Эти недостатки не относятся к мелким ошибкам, которые можно исправить, а носят скорее архитектурный характер.
+<ul>
+<li>
+Дизассемблер плохо расширяем. Добавить инструкцию, имеющую количество операндов, больше чем три практически невозможно.
+</li>
+<li>
+Т.к. дизассемблер описывает инструкцию и все операнды одной записью в таблице, много места теряется при описании инструкций, не имеющих операндов или имеющих один операнд.
+</li>
+<li>
+В дизассемблере не предусмотрена возможность описать префиксы, фатально влиящие на исполнение инструкции. Например, поведение инструкции bswap не определено для 16битных операндов. Дизассемблер никак не отражает эту особенность.
+</li>
+<li>
+Для описания флагов EFLAGS и флагов устройства FPU используются одни и те же члены структуры INSTRUCTION. Некоторые инструкции FPU одновременно влияют как на флаги EFLAGS, так и на флаги FPU. Дизассемблер не может отобразить одновременно флаги EFLAGS и FPU и в этом случае отдает предпочтение флагам FPU.
+</li>
+<li>
+И наконец последний из замеченных мной недостатков -- отсутствие информации о типе доступа к операнду (чтение/запись/исполнение).
+</li>
+</ul>
+Надеюсь, что со временем эти недостатки будут устранены.
+<br/>
+<br/>
+<u>Немного мыслей о дизассемблировании</u>
+<br/>
+Во время написания дизассемблера я подглядывал в несколько существующих дизассемблеров в поисках хороших идей. Чаще всего это были libdisasm и дизассемблер из эмулятора Bochs. В этом параграфе я немного скажу, что думаю по поводу дизассемблирования и возможной архитектуры дизассемблера.
+<br/>
+Мне очень понравилась идея табличного представления данных. Во-первых, поиск описателя инструкции по индексу кода операции в таблице происходит очень быстро, во-вторых, таблицы, в отличие от кода, позволяют довольно легко добавлять и изменять инструкции. В Bochs по каким-то причинам (м.б. для скорости) таблицы разделены на 32битную и 64битную версии. Мне такое разделение показалось избыточным, и я склонился к идее libdisasm. Как и libdisasm, мой дизассемблер описывает почти всю инструкцию одной записью в таблице. Такой подход имеет как плюсы, так и минусы. К плюсам можно отнести простоту редактирования инструкций, а также то, что большАя часть таблицы может попасть в кэш, таким образом ускорив дизассемблер. К минусам можно отнести избыточность и плохую расширияемость. Т.к. инструкция описывается одно записью, количество операндов жестко прописывается одновременно для всех инструкций и должно равняться макисмально возможному количеству операндов. В результате теряется память для инструкций, которые имеют меньше операндов. Это будет чувствоваться особо сильно если размер структуры OPERAND увеличится. Увеличивать максимальное число операндов тоже довольно сложно, т.к. придется увеличивать его сразу во всех таблицах. Вариант с ссылками (как в дизассемблере Bochs) кажется более гибким, но тоже имеет несколько недостатков. Редактировать такие таблицы вручную намного сложнее, а объем занимаемого места уменьшится незначительно, если уменьшится вообще. Подсчет для вероятных структур данных:
+<pre>
+struct INTERNAL_OPERAND
+{
+    uint8_t type;
+    uint8_t size;
+};
+
+struct OPERANDS
+{
+    struct INTERNAL_OPERAND operand[];
+    uint8_t                 count;
+};
+
+struct OPCODE_DESCRIPTOR
+{
+    ...
+    struct OPERANDS *operands;
+    ...
+};
+</pre>
+В этом случае мы имеем 4 байта на указатель и, в случае отсутствия операндов, 7 байт для одного операнда, 9 байт для двух и 11 байт для трех операндов. Статистика по количеству операндов для моих таблиц:
+<pre>
+Инструкций без операндов: 75
+с одним операндом:        221
+с двумя:                  807
+и тремя:                  38
+</pre>
+Получаем: 4 * 75 + 7 * 221 + 9 * 807 + 11 * 3 == 9 143 байт. В случае использования одной записи на инструкцию операнды всегда занимают 6 байт. Инструкций в моих таблицах 1 141, 6 * 1 141 == 6 846 байт.<br/>
+Конечно, экономия 2 297 байт вряд ли покажется кому-то серьезной. Но все же, перед тем как принимать, решение лучше произвести небольшие подсчеты.
+<br/>
+<br/>
+Отдельно хочется сказать про таблицы дизассемблера. Набивать таблицы руками, особенно до тех пор, пока формат таблиц не устоялся, очень тяжело. Есть смысл подыскать готовые таблицы (я взял таблицу в виде файла XML с <a href='http://ref.x86asm.net'>http://ref.x86asm.net</a>) и написать небольшой генератор, конвертирующий их в ваш формат. Изменять генератор намного проще и веселее, чем перебивать сотни инструкций руками. Особенно, если генератор написан, например, на С, а не на ассемблере, как в моем случае.
+<br/>
+<br/>
+После того, как дизассемблер готов, его не лишне протестировать. В этом случае есть смысл либо написать генератор инструкций самому, либо взять готовый файл, содержащий инструкции во всех формах. Мне достался такой файл в готовом виде (кажется, его выкладывали на wasm.ru), скачать его можно здесь: <a href='http://sourceforge.net/projects/mediana/files/tests.bin/asm_com.bin/download'>mediana.sf.net</a>. Файл содержит довольно много относительно новых инструкций, а также недокументированные инструкции и, видимо, уже несуществующие инструкции. Моя версия файла, в которой несуществующие инструкции заменены на nop, можно скачать здесь: <a href='http://sourceforge.net/projects/mediana/files/tests.bin/asm_com2.bin/download'>mediana.sf.net</a>.
+<br/>
+<br/>
+<u>Где скачать</u>
+<br/>
+Дизассемблер, и связанные с ним файлы, можно скачать здесь: <a href='http://mediana.sf.net'>Mediana</a>.
+<br/>
+<br/>
+<u>Заключение</u>
+<br/>
+Это все, что я хотел сказать про дизассемблер. Надеюсь, что вам было интересно. Если у вас есть вопросы или вы нашли ошибку -- без стеснения пишите мне на почту (ящик указан в исходниках) или в журнал: http://mika0x65.livejournal.com
+<br/>
+<br/>
+<u>Благодарности</u>
+<br/>
+<ul>
+<li>
+<b>Сергей Чаплыгин</b>: огромное количество советов по внутренней архитектуре дизассемблера.
+</li>
+<li>
+<b>MazeGen</b> (<a href='http://ref.x86asm.net'>http://ref.x86asm.net</a>): описание инструкций в формате XML.
+</li>
+<li>
+<b>Archer</b>: тестирование дизассемблера, советы по выходному формату.
+</li>
+<li>
+<b>Все, кто тестировал дизассемблер, или просто помогал добрым словом :).</b>
+</li>
+</ul>

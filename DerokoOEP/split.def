@@ -1,0 +1,6 @@
+LIBRARY split
+EXPORTS
+
+ShortFinderName
+GetOEPNow
+GetDllOEPNow
