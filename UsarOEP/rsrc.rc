@@ -1,0 +1,46 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// Neutral resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_NEU)
+#ifdef _WIN32
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+#pragma code_page(1251)
+#endif //_WIN32
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_MAINDLG DIALOGEX 30, 10, 310, 100
+STYLE DS_SETFONT | DS_CENTER | WS_POPUP | WS_VISIBLE | WS_MAXIMIZE
+FONT 8, "fixedsys", 700, 0, 0x1
+BEGIN
+    LTEXT           " [00] Generic OEP Finder by Archer and UsAr",IDC_STATICCAPTION,0,0,310,8
+    EDITTEXT        IDC_OUTPUT,9,17,292,65,ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_READONLY | NOT WS_BORDER | NOT WS_TABSTOP
+    LTEXT           "1",IDC_STATICTEXT1,30,91,5,10
+    LTEXT           "2",IDC_STATICTEXT2,111,91,5,10
+    LTEXT           "3",IDC_STATICTEXT3,192,91,5,10
+    CONTROL         "Yes",IDC_YES,"Button",BS_OWNERDRAW,35,90,74,10
+    CONTROL         "",IDC_NEXT,"Button",BS_OWNERDRAW,116,90,74,10
+    CONTROL         "About",IDC_ABOUT,"Button",BS_OWNERDRAW,197,90,74,10
+    CONTROL         "",IDC_OK,"Button",BS_OWNERDRAW,116,90,74,10
+    LTEXT           "Generic OEP Finder by Archer and UsAr\nBased on Code Injection (no Debug API used)\nCoded in assembly by: UsAr\nPorted to C++ by Archer and LaZzy\n",IDC_STATICABOUT,10,20,290,60
+END
+
+#endif    // Neutral resources
+/////////////////////////////////////////////////////////////////////////////

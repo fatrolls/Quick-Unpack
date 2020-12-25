@@ -1,0 +1,347 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// Russian resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_RUS)
+#ifdef _WIN32
+LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
+#pragma code_page(1251)
+#endif //_WIN32
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "#define _AFX_NO_SPLITTER_RESOURCES\r\n"
+    "#define _AFX_NO_OLE_RESOURCES\r\n"
+    "#define _AFX_NO_TRACKER_RESOURCES\r\n"
+    "#define _AFX_NO_PROPERTY_RESOURCES\r\n"
+    "\r\n"
+    "#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)\r\n"
+    "LANGUAGE 9, 1\r\n"
+    "#pragma code_page(1252)\r\n"
+    "#include ""afxres.rc""         // Standard components\r\n"
+    "#endif\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// MUSIC
+//
+
+IDR_MUSIC               MUSIC                   "res\\music.xm"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// LOGO
+//
+
+IDR_LOGO                LOGO                    "res\\logo.jpg"
+
+#endif    // Russian resources
+/////////////////////////////////////////////////////////////////////////////
+
+/////////////////////////////////////////////////////////////////////////////
+// English (U.S.) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+#endif //_WIN32
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_DLG_ABOUT DIALOGEX 0, 0, 213, 201
+STYLE DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "About"
+FONT 8, "Tahoma", 400, 0, 0xCC
+BEGIN
+    CONTROL         "",IDC_PICTURE,"Static",SS_BLACKFRAME,0,0,182,240
+    LTEXT           "http://qunpack.ahteam.org",IDC_URL,61,160,90,8
+    LTEXT           "Archer and FEUERRADER (C) 2004-2010",IDC_STATIC,45,172,124,8
+    DEFPUSHBUTTON   "OK",IDOK,85,185,42,13
+END
+
+IDD_DLG_ATTACH DIALOGEX 0, 0, 523, 306
+STYLE DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Choose process and module"
+FONT 8, "Tahoma", 400, 0, 0xCC
+BEGIN
+    LISTBOX         IDC_PROCESSES,8,10,505,129,LBS_SORT | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+    LISTBOX         IDC_MODULES,8,144,505,156,LBS_SORT | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+END
+
+IDD_DLG_DISASM DIALOGEX 0, 0, 363, 182
+STYLE DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Disassembler"
+FONT 10, "Terminal", 400, 0, 0xFF
+BEGIN
+    LISTBOX         IDC_DISLIST,11,14,340,137,LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        "",IDC_STATIC,5,3,354,155
+    DEFPUSHBUTTON   "OK",IDOK,307,165,50,14
+END
+
+IDD_DLG_DUMP DIALOGEX 0, 0, 415, 239
+STYLE DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Application error"
+FONT 8, "Terminal", 400, 0, 0xFF
+BEGIN
+    PUSHBUTTON      "Copy to clipboard",IDC_COPYTOCLIPBOARD,284,221,81,14
+    DEFPUSHBUTTON   "Close",IDOK,373,221,37,14
+    CONTROL         "",IDC_STATIC,"Static",SS_WHITERECT,0,0,415,34
+    CONTROL         "",IDC_STATIC,"Static",SS_ETCHEDHORZ,0,34,415,1
+    CONTROL         "Application has encountered a problem and needs to close. Sorry for the inconvenience.",IDC_CRASHTEXT,
+                    "Static",SS_SIMPLE | WS_GROUP,10,12,344,8
+    EDITTEXT        IDC_DUMPDATA,8,42,400,174,ES_MULTILINE | ES_AUTOHSCROLL | ES_READONLY | WS_VSCROLL
+END
+
+IDD_DLG_EDITIMPORT DIALOGEX 0, 0, 267, 225
+STYLE DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Edit function"
+FONT 8, "Tahoma", 400, 0, 0xCC
+BEGIN
+    COMBOBOX        IDC_MODULE,8,10,250,240,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL
+    LISTBOX         IDC_FUNCTIONS,9,31,249,163,LBS_SORT | LBS_NOINTEGRALHEIGHT | LBS_WANTKEYBOARDINPUT | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "OK",IDOK,76,201,86,17
+    PUSHBUTTON      "Cancel",IDCANCEL,172,201,86,17
+END
+
+IDD_DLG_FINDERS DIALOGEX 0, 0, 193, 186
+STYLE DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "OEP Finders"
+FONT 8, "Tahoma", 400, 0, 0xCC
+BEGIN
+    LISTBOX         IDC_OEPFINDERSBOX,4,2,185,182,LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+END
+
+IDD_DLG_IMPORT DIALOGEX 0, 0, 538, 242
+STYLE DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Import Table"
+FONT 8, "Tahoma", 400, 0, 0xCC
+BEGIN
+    CONTROL         "",IDC_IMPORTLIST,"SysListView32",LVS_REPORT | LVS_SHOWSELALWAYS | LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,7,7,446,210
+    PUSHBUTTON      "Delete selected",IDC_DELETEIMPORTSEL,454,7,77,15
+    PUSHBUTTON      "Delete invalid",IDC_DELETEIMPORTINVALID,454,24,77,15
+    PUSHBUTTON      "Export to file",IDC_EXPORTIMP,454,42,77,15
+    PUSHBUTTON      "Import from file",IDC_IMPORTIMP,454,61,77,16
+    PUSHBUTTON      "Disasm",IDC_IMPORTDISASM,454,88,77,15
+    PUSHBUTTON      "Edit",IDC_EDITIMPORT,454,106,77,15
+    PUSHBUTTON      "Load library",IDC_LOADLIBRARY,454,124,77,15
+    PUSHBUTTON      "Use old IAT",IDC_USEOLDIAT,454,151,77,15
+    PUSHBUTTON      "Save",IDC_SAVEIMPORT,454,169,77,15
+    LTEXT           "Import RVA:",IDC_STATIC,469,189,62,9
+    EDITTEXT        IDC_IMPORTRVABOX,466,198,47,12,ES_AUTOHSCROLL
+    PUSHBUTTON      "Change sorting",IDC_CHANGESORT,7,222,77,15
+    PUSHBUTTON      "Prev forward",IDC_PREVFORW,87,222,77,15,WS_DISABLED
+    PUSHBUTTON      "Next forward",IDC_NEXTFORW,167,222,77,15,WS_DISABLED
+    PUSHBUTTON      "Prev function",IDC_PREVFUNC,247,222,77,15,WS_DISABLED
+    PUSHBUTTON      "Next function",IDC_NEXTFUNC,327,222,77,15,WS_DISABLED
+END
+
+IDD_DLG_INPUT DIALOGEX 0, 0, 278, 55
+STYLE DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Input value"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    EDITTEXT        IDC_INPUTEDIT,7,7,264,16,ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "OK",IDOK,7,30,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,221,30,50,14
+END
+
+IDD_DLG_LICENSE DIALOGEX 0, 0, 331, 289
+STYLE DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_APPWINDOW
+CAPTION "End-User Software License Agreement"
+FONT 8, "Tahoma", 400, 0, 0xCC
+BEGIN
+#if defined UNICODE
+    CONTROL         "",IDC_LICENSETEXT,"RichEdit20W",ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_READONLY | ES_NUMBER | WS_BORDER | WS_VSCROLL | WS_TABSTOP,5,4,319,229
+#else
+    CONTROL         "",IDC_LICENSETEXT,"RichEdit20A",ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_READONLY | ES_NUMBER | WS_BORDER | WS_VSCROLL | WS_TABSTOP,5,4,319,229
+#endif
+    CONTROL         "",IDC_STATIC,"Static",SS_BLACKFRAME,5,4,320,258
+    CONTROL         "Once you agree you will be bound by the terms of above agreement.",IDC_STATIC,
+                    "Static",SS_LEFTNOWORDWRAP | SS_WORDELLIPSIS | WS_GROUP,11,238,309,9
+    LTEXT           "If you choose NO, program will close.",IDC_STATIC,11,249,309,9
+    PUSHBUTTON      "YES",IDOK,230,270,45,14,WS_DISABLED
+    PUSHBUTTON      "NO",IDCANCEL,279,270,45,14
+END
+
+IDD_DLG_LUA DIALOGEX 0, 0, 475, 290
+STYLE DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Lua scripting"
+FONT 8, "Tahoma", 400, 0, 0xCC
+BEGIN
+    PUSHBUTTON      "Load",IDC_LOADSCRIPT,408,7,64,14
+    PUSHBUTTON      "Save",IDC_SAVESCRIPT,408,24,64,14
+    PUSHBUTTON      "Save as...",IDC_SAVEASSCRIPT,408,41,64,14
+    PUSHBUTTON      "Run",IDC_RUNSCRIPT,408,63,64,14
+    PUSHBUTTON      "Close",IDC_CLOSESCRIPT,408,80,64,14
+#if defined UNICODE
+    CONTROL         "",IDC_SCRIPTTEXT,"RichEdit20W",ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_WANTRETURN | ES_NUMBER | WS_BORDER | WS_VSCROLL | WS_HSCROLL | WS_TABSTOP,7,7,398,276
+#else
+    CONTROL         "",IDC_SCRIPTTEXT,"RichEdit20A",ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_WANTRETURN | ES_NUMBER | WS_BORDER | WS_VSCROLL | WS_HSCROLL | WS_TABSTOP,7,7,398,276
+#endif
+END
+
+IDD_DLG_MAIN DIALOGEX 0, 0, 547, 331
+STYLE DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_MINIMIZEBOX | WS_POPUP | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_ACCEPTFILES | WS_EX_APPWINDOW
+CAPTION "QuickUnpack 4.3"
+MENU IDR_MAINMENU
+FONT 8, "Tahoma", 400, 0, 0xCC
+BEGIN
+    PUSHBUTTON      "Change engine",IDC_CHANGEENGINE,463,4,80,14
+    PUSHBUTTON      "Open file",IDC_OPENFILE,463,20,80,14
+    PUSHBUTTON      "Attach to process",IDC_ATTACH,463,36,80,14
+    PUSHBUTTON      "Full unpack",IDC_UNPACK,463,52,80,14,WS_DISABLED
+    PUSHBUTTON      "Use script",IDC_USESCRIPT,463,68,80,14,WS_DISABLED
+    PUSHBUTTON      "Kill target",IDC_KILL,463,84,80,14,WS_DISABLED
+    PUSHBUTTON      "Test unpacked",IDC_TEST,463,100,80,14,WS_DISABLED
+    PUSHBUTTON      "Find file",IDC_FINDOBJECT,463,116,80,14,WS_DISABLED
+    PUSHBUTTON      "Delete unpacked",IDC_UNPDEL,463,132,80,14,WS_DISABLED
+    PUSHBUTTON      "Clear log",IDC_CLEARLOG,463,148,80,14
+    PUSHBUTTON      "Exit",IDC_EXIT,463,164,80,14
+    GROUPBOX        "Options",IDC_STATICOPTIONS,323,4,135,56
+    LTEXT           "OEP:",IDC_STATICOEP,329,19,16,8
+    EDITTEXT        IDC_OEPBOX,347,17,47,12,ES_AUTOHSCROLL
+    PUSHBUTTON      "...",IDC_FINDOEP,397,17,12,12,WS_DISABLED
+    PUSHBUTTON      "Disasm",IDC_DISASM,415,17,39,12
+    AUTOCHECKBOX    "Use force unpacking",IDC_USEFORCE,329,31,125,10
+    LTEXT           "Parameters:",IDC_STATICPARAMS,329,45,40,8
+    EDITTEXT        IDC_PARAMSBOX,371,43,83,12,ES_AUTOHSCROLL
+    GROUPBOX        "Import recovery",IDC_STATICIMPORT,322,61,136,75
+    AUTORADIOBUTTON "Smart method",IDC_IMPREC_SMART,327,73,125,10
+    AUTORADIOBUTTON "Smart method+tracer",IDC_IMPREC_TRACER,327,85,125,10
+    AUTORADIOBUTTON "Do not recover",IDC_IMPREC_NONE,327,97,125,10
+    AUTORADIOBUTTON "Load libraries only",IDC_IMPREC_LIBSONLY,327,109,125,10
+    AUTOCHECKBOX    "Process relocations",IDC_RELOCS,327,121,125,10
+    LTEXT           "End of module for import:",IDC_STATICENDMODULE,323,141,85,8
+    EDITTEXT        IDC_MODENDBOX,410,139,48,12,ES_AUTOHSCROLL
+    LTEXT           "Cut module at:",IDC_STATICCUTAT,323,156,85,8
+    EDITTEXT        IDC_CUTMODULEBOX,410,154,48,12,ES_AUTOHSCROLL
+    LTEXT           "Time delta:",IDC_STATICDELTA,323,171,71,8
+    PUSHBUTTON      "...",IDC_FINDDELTA,396,169,12,12
+    EDITTEXT        IDC_TIMEDELTABOX,410,169,48,12,ES_AUTOHSCROLL
+    AUTOCHECKBOX    "Cut last sections and rebuild directories",IDC_REMSECT,327,183,200,10
+    AUTOCHECKBOX    "Include suspect functions into import",IDC_SUSPFUNC,327,195,200,10
+    AUTOCHECKBOX    "Process direct import references",IDC_DIRECTREFS,327,207,200,10
+    AUTOCHECKBOX    "Leave direct import references",IDC_LEAVEDIRECTREFS,337,219,190,10
+    AUTOCHECKBOX    "Execute functions while tracing import",IDC_EXECFUNC,327,231,200,10
+    AUTOCHECKBOX    "Append overlay",IDC_APPOVERLAY,327,243,200,10
+    AUTOCHECKBOX    "Protect DR",IDC_PROTECTDR,327,255,200,10
+    AUTOCHECKBOX    "Restore Delphi initialization table",IDC_DELPHIINIT,327,267,200,10
+    AUTOCHECKBOX    "Use TF for tracing",IDC_USETF,327,279,200,10
+    AUTOCHECKBOX    "Use long import trampoline",IDC_LONGIMPORT,327,291,200,10
+    AUTOCHECKBOX    "Make path for libraries",IDC_PATHLIBS,327,303,200,10
+    AUTOCHECKBOX    "Autosave log",IDC_AUTOSAVELOG,327,315,200,10
+#if defined UNICODE
+    CONTROL         "",IDC_MAINLOG,"RichEdit20W",ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_READONLY | ES_NUMBER | WS_BORDER | WS_VSCROLL | WS_HSCROLL | WS_TABSTOP,7,4,311,321
+#else
+    CONTROL         "",IDC_MAINLOG,"RichEdit20A",ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_READONLY | ES_NUMBER | WS_BORDER | WS_VSCROLL | WS_HSCROLL | WS_TABSTOP,7,4,311,321
+#endif
+END
+
+IDD_DLG_PREF DIALOGEX 0, 0, 165, 73
+STYLE DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Preferences"
+FONT 8, "Tahoma", 400, 0, 0xCC
+BEGIN
+    AUTOCHECKBOX    "Register shell extension",IDC_REGSHELLEXT,3,3,148,10
+    AUTOCHECKBOX    "Always on top",IDC_ALWAYSONTOP,3,20,148,10
+    COMBOBOX        IDC_LANGS,3,37,155,240,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Save",IDC_SAVEPREF,69,55,42,14
+    PUSHBUTTON      "Cancel",IDCANCEL,119,55,42,14
+END
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Menu
+//
+
+IDR_MAINMENU MENU 
+BEGIN
+    POPUP "File"
+    BEGIN
+        MENUITEM "Exit",                        ID_MENU_EXIT
+    END
+    POPUP "Log"
+    BEGIN
+        MENUITEM "Clear log",                   ID_MENU_CLEARLOG
+        MENUITEM "Save log",                    ID_MENU_SAVELOG
+    END
+    POPUP "Options"
+    BEGIN
+        MENUITEM "Preferences",                 ID_MENU_PREF
+    END
+    POPUP "About"
+    BEGIN
+        MENUITEM "License agreement",           ID_MENU_LICENSE
+        MENUITEM "About",                       ID_MENU_ABOUT
+    END
+END
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDR_MAINICON            ICON                    "res\\icon.ico"
+#endif    // English (U.S.) resources
+/////////////////////////////////////////////////////////////////////////////
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+#define _AFX_NO_SPLITTER_RESOURCES
+#define _AFX_NO_OLE_RESOURCES
+#define _AFX_NO_TRACKER_RESOURCES
+#define _AFX_NO_PROPERTY_RESOURCES
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+LANGUAGE 9, 1
+#pragma code_page(1252)
+#include "afxres.rc"         // Standard components
+#endif
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED

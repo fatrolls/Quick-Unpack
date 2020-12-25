@@ -1,0 +1,6 @@
+LIBRARY	"UsAr"
+
+EXPORTS
+ShortFinderName
+GetOEPNow
+GetDllOEPNow
