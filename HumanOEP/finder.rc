@@ -1,0 +1,61 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// Neutral resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_NEU)
+#ifdef _WIN32
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+#pragma code_page(1251)
+#endif //_WIN32
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_MAINDLG DIALOGEX 0, 0, 280, 136
+STYLE DS_SETFONT | DS_SETFOREGROUND | DS_CENTER | WS_MINIMIZEBOX | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "OEP Finder by Archer & Human"
+FONT 8, "MS SANS SERIF", 0, 0, 0x0
+BEGIN
+    LTEXT           "File:",IDC_STATICFILE,8,10,36,8
+    EDITTEXT        IDC_FILENAME,48,8,184,12,ES_READONLY | NOT WS_TABSTOP
+    LTEXT           "Command:",IDC_STATICCOMMAND,8,24,36,8
+    EDITTEXT        IDC_COMMAND,48,22,184,12
+    AUTOCHECKBOX    "Use &Int 3",IDC_USEINT3,8,36,76,9
+    AUTOCHECKBOX    "&Kill Low Alloc",IDC_KILLLOWALLOCK,8,46,76,9
+    AUTOCHECKBOX    "Hook Virtual&Alloc",IDC_HOOKALLOCK,8,56,76,9
+    AUTOCHECKBOX    "Hook Virtual&Protect",IDC_HOOKPROTECT,8,66,76,9
+    COMBOBOX        IDC_NUMOFTHREADS,8,88,24,24,CBS_DROPDOWNLIST | WS_BORDER | WS_TABSTOP
+    CTEXT           "CreateThread Allowed",IDC_STATICCREATETHREAD,36,86,44,16
+    LISTBOX         IDC_SECTIONS,88,39,144,70,NOT LBS_NOTIFY | WS_VSCROLL | WS_TABSTOP
+    AUTOCHECKBOX    "Use Custom &Range",IDC_USERANGE,8,104,76,9
+    EDITTEXT        IDC_RANGESTART,88,102,44,12,ES_RIGHT | ES_UPPERCASE | ES_READONLY
+    LTEXT           "Size:",IDC_STATICRANGESIZE,140,104,20,9
+    EDITTEXT        IDC_RANGESIZE,164,102,44,12,ES_RIGHT | ES_UPPERCASE | ES_READONLY
+    LTEXT           "Memory Start:",IDC_STATICMEMSTART,18,120,48,9
+    EDITTEXT        IDC_MEMSTART,88,118,44,12,ES_RIGHT | ES_UPPERCASE
+    LTEXT           "End:",IDC_STATICMEMEND,140,120,16,9
+    EDITTEXT        IDC_MEMEND,164,118,44,12,ES_RIGHT | ES_UPPERCASE
+    PUSHBUTTON      "&Oep",IDC_OEP,236,8,36,12
+    PUSHBUTTON      "&Detach",IDC_DETACH,236,27,36,12
+    PUSHBUTTON      "D&ump",IDC_DUMP,236,45,36,12
+    PUSHBUTTON      "E&xit",IDC_EXIT,236,63,36,12
+    GROUPBOX        "",IDC_STATICFRAME,3,0,273,134
+END
+
+#endif    // Neutral resources
+/////////////////////////////////////////////////////////////////////////////

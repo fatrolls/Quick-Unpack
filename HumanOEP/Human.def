@@ -1,0 +1,6 @@
+LIBRARY HUMAN
+EXPORTS
+
+ShortFinderName
+GetOEPNow
+GetDllOEPNow

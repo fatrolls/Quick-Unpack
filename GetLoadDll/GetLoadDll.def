@@ -1,0 +1,4 @@
+LIBRARY	"GetLoadDll"
+
+EXPORTS
+GetLoadDllAddress

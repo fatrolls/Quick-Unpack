@@ -1,0 +1,6 @@
+LIBRARY force
+
+EXPORTS
+GetOEPNow
+ShortFinderName
+GetDllOEPNow
